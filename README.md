@@ -22,10 +22,10 @@ Photon Realtime: https://www.photonengine.com/en-US/Realtime
 11. You can leave the socket type to UDP, but if you are making a WebGL game, change it to Web Socket
 12. Thats it! 
 
-##Client 
+## Client 
 
 To connect as a client, put the room name you want to connect to and use NetworkManager.ClientManager.StartConnection()
 
-##Server
+## Server
 
 To start a server, put the room name you want to connect to and use NetworkManager.ServerManager.StartConnection()
