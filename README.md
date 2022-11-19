@@ -16,11 +16,12 @@ Photon Realtime: https://www.photonengine.com/en-US/Realtime
 5. Click on "Create a new app"
 6. Leave the Photon Type at realtime, and after filling the name and description, click on "Create"
 7. Now download this transport, and import it into Unity
-8. Add a FishyRealtime component to your NetworkManager
-9. Go back to the Photon Dashboard and on your project copy the App ID to the FishyRealtime's App Id field
-10. In the Version put whatever you like. Keep in mind that clients with different versions cant connect to eachother
-11. You can leave the socket type to UDP, but if you are making a WebGL game, change it to Web Socket
-12. Thats it! 
+8. Add a FishyRealtime component and a TransportManager to your NetworkManager
+9. Set the transport field of the TransportManager to the FishyRealtime you just added
+10. Go back to the Photon Dashboard and on your project copy the App ID to the FishyRealtime's App Id field
+11. In the Version put whatever you like. Keep in mind that clients with different versions cant connect to eachother
+12. You can leave the socket type to UDP, but if you are making a WebGL game, change it to Web Socket
+13. Thats it! 
 
 ## Client 
 
