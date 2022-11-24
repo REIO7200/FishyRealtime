@@ -8,7 +8,9 @@ using FishNet;
 using ExitGames.Client.Photon;
 using FishNet.Managing.Transporting;
 using FishNet.Managing.Logging;
-
+using FishNet.Object;
+using FishNet.Connection;
+using FishyRealtime.Migration;
 
 namespace FishyRealtime
 {
@@ -36,11 +38,17 @@ namespace FishyRealtime
         [Tooltip("What is goinng to be used to connect")]
         public ConnectionProtocol connectionProtocol;
 
-        bool isServer = false;
+        [Tooltip("True to migrate the host when it leaves")]
+        public bool migrateHost = true;
 
+
+        bool isServer = false;
 
         public override event Action<ClientReceivedDataArgs> OnClientReceivedData;
         public override event Action<ServerReceivedDataArgs> OnServerReceivedData;
+
+        public Dictionary<int, int> PhotonIdToFishNet = new Dictionary<int, int>();
+        public Dictionary<int, int> FishNetIdToPhoton = new Dictionary<int, int>();
 
         //?
         public override string GetConnectionAddress(int connectionId)
@@ -52,6 +60,16 @@ namespace FishyRealtime
         public override void SetClientAddress(string address)
         {
             roomName = address;
+        }
+
+        private void Start()
+        {
+            
+        }
+
+        private void FixedUpdate()
+        {
+            
         }
 
         #region Connection state
@@ -130,6 +148,11 @@ namespace FishyRealtime
 
             segment = new ArraySegment<byte>(segment.Array, segment.Offset, segment.Count + 1);
 
+            if(NetworkManager.IsHost)
+            {
+                SendHost(segment);
+            }
+
             client.OpRaiseEvent(0, segment, RaiseEventOptions.Default, options);
         }
 
@@ -151,10 +174,12 @@ namespace FishyRealtime
             }
 
             segment = new ArraySegment<byte>(segment.Array, segment.Offset, segment.Count + 1);
+
+            
             //Set the ID of the connection where we want to send
             eventOptions.TargetActors[0] = connectionId + 1;
 
-            client.OpRaiseEvent(0, segment, eventOptions, options);
+            client.OpRaiseEvent(1, segment, eventOptions, options);
         }
 
         public override void HandleClientReceivedDataArgs(ClientReceivedDataArgs receivedDataArgs)
@@ -169,7 +194,7 @@ namespace FishyRealtime
 
         public override void IterateIncoming(bool server)
         {
-            client.Service();
+            //client.Service();
         }
 
         public override void IterateOutgoing(bool server)
@@ -186,8 +211,18 @@ namespace FishyRealtime
             using (ByteArraySlice byteArraySlice = photonEvent.CustomData as ByteArraySlice)
             {
                 ArraySegment<byte> data = new ArraySegment<byte>(byteArraySlice.Buffer, byteArraySlice.Offset, byteArraySlice.Count);
-
-                if (photonEvent.Sender == 1)
+                //Migration data
+                if(photonEvent.Code == 3)
+                {
+                    Debug.Log("fe");
+                    FishNet.Serializing.Reader reader = new FishNet.Serializing.Reader(data, NetworkManager);
+                    GameObject[] objects = reader.Read<GameObject[]>();
+                    foreach (GameObject obj in objects)
+                    {
+                        Instantiate(obj);
+                    }
+                }
+                if (photonEvent.Code == 1)
                 {
                     //Sent by server
                     byte channelId = data[data.Count - 1];
@@ -207,6 +242,16 @@ namespace FishyRealtime
             }
         }
 
+        //A fake method for receiving data as host
+        void SendHost(ArraySegment<byte> data)
+        {
+            byte channelId = data[data.Count - 1];
+            data = new ArraySegment<byte>(data.Array, 0, data.Count - 1);
+            Channel channel = channelId == 0 ? Channel.Reliable : Channel.Unreliable;
+            ServerReceivedDataArgs args = new ServerReceivedDataArgs(data, channel, 0, Index);
+            HandleServerReceivedDataArgs(args);
+        }
+
         #endregion
 
         #region Connecting
@@ -220,6 +265,7 @@ namespace FishyRealtime
                 AppIdRealtime = photonAppId,
                 AppVersion = appVersion,
                 Protocol = connectionProtocol,
+                FixedRegion = "eu"
             };
 
             client.LoadBalancingPeer.UseByteArraySlicePoolForEvents = true;
@@ -252,15 +298,18 @@ namespace FishyRealtime
 
         public override bool StopConnection(bool server)
         {
+            client.Disconnect();
+
+            client.RemoveCallbackTarget(this);
             if (!server && NetworkManager.IsServer)
             {
                 ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
                 HandleClientConnectionState(clientArgs);
-                return false;
+                RemoteConnectionStateArgs state = new RemoteConnectionStateArgs(RemoteConnectionState.Stopped, 0, Index);
+                HandleRemoteConnectionState(state);
+                return true;
             }
-            client.Disconnect();
-
-            client.RemoveCallbackTarget(this);
+            
             if (server)
             {
                 ServerConnectionStateArgs args = new ServerConnectionStateArgs(GetConnectionState(true), Index);
@@ -270,12 +319,9 @@ namespace FishyRealtime
             {
                 ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(GetConnectionState(false), Index);
                 HandleClientConnectionState(clientArgs);
-                if (NetworkManager.IsServer)
-                {
-                    RemoteConnectionStateArgs state = new RemoteConnectionStateArgs(RemoteConnectionState.Stopped, 0, Index);
-                    HandleRemoteConnectionState(state);
-                }
             }
+
+            
             return true;
         }
 
@@ -325,6 +371,7 @@ namespace FishyRealtime
 
         public void OnJoinedRoom()
         {
+            FishNetIdToPhoton.Add(client.LocalPlayer.ActorNumber - 1, client.LocalPlayer.ActorNumber);
             if (!base.NetworkManager.IsServer)
             {
                 ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(GetConnectionState(false), Index);
@@ -346,6 +393,8 @@ namespace FishyRealtime
 
         public void OnPlayerEnteredRoom(Player newPlayer)
         {
+            FishNetIdToPhoton.Add(newPlayer.ActorNumber - 1, newPlayer.ActorNumber);
+            PhotonIdToFishNet.Add(newPlayer.ActorNumber, newPlayer.ActorNumber - 1);
             if (isServer)
             {
                 RemoteConnectionStateArgs state = new RemoteConnectionStateArgs(GetConnectionState(newPlayer.ActorNumber), newPlayer.ActorNumber - 1, Index);
@@ -355,12 +404,9 @@ namespace FishyRealtime
 
         public void OnPlayerLeftRoom(Player otherPlayer)
         {
-            if (otherPlayer.ActorNumber == 1)
+            if (NetworkManager.IsServer)
             {
-                StopConnection(isServer);
-            }
-            if (isServer)
-            {
+                if (otherPlayer.ActorNumber == 1 && otherPlayer != client.LocalPlayer) return;
                 RemoteConnectionStateArgs state = new RemoteConnectionStateArgs(GetConnectionState(otherPlayer.ActorNumber), otherPlayer.ActorNumber - 1, Index);
                 HandleRemoteConnectionState(state);
             }
@@ -369,7 +415,7 @@ namespace FishyRealtime
 
         public override int GetMTU(byte channel)
         {
-            return 1500;
+            return 1200;
         }
         #region Photon Events
         public void OnConnected()
@@ -406,13 +452,7 @@ namespace FishyRealtime
         {
 
         }
-
-
-
-
-
-
-
+        
         public void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
         {
 
@@ -425,10 +465,54 @@ namespace FishyRealtime
 
         public void OnMasterClientSwitched(Player newMasterClient)
         {
+            if (!migrateHost) return;
+            if (newMasterClient == client.LocalPlayer)
+            {
+                ServerConnectionStateArgs args = new ServerConnectionStateArgs(LocalConnectionState.Started, Index);
+                HandleServerConnectionState(args);
+                NetworkObject[] networkObjects = FindObjectsOfType<NetworkObject>();
+                for (int i = 0; i < networkObjects.Length; i++)
+                {
+                    HostMigration migrator = networkObjects[i].gameObject.AddComponent<HostMigration>();
+                    migrator.playerID = FishNetIdToPhoton[networkObjects[i].OwnerId];
+                    networkObjects[i].RemoveOwnership();
+                }
+                FishNetIdToPhoton.Clear();
 
+                foreach (KeyValuePair<int, Player> entry in client.CurrentRoom.Players)
+                {
+                    RemoteConnectionStateArgs remoteArgs = new RemoteConnectionStateArgs(RemoteConnectionState.Started, entry.Value.ActorNumber - 1, Index);
+                    HandleRemoteConnectionState(remoteArgs);
+                    FishNetIdToPhoton.Add(entry.Value.ActorNumber - 1, entry.Value.ActorNumber);
+                    PhotonIdToFishNet.Add(entry.Value.ActorNumber, entry.Value.ActorNumber - 1);
+                }
+
+                networkObjects = FindObjectsOfType<NetworkObject>();
+                for (int i = 0; i < networkObjects.Length; i++)
+                {
+                    //If this got spawned by the PlayerSpawner, remove it
+                    if (!networkObjects[i].gameObject.TryGetComponent(out HostMigration _)) networkObjects[i].Despawn(networkObjects[i].gameObject);
+                }
+
+                HostMigration[] migrators = FindObjectsOfType<HostMigration>();
+                foreach (KeyValuePair<int, NetworkConnection> entry in NetworkManager.ServerManager.Clients)
+                {
+                    for (int i = 0; i < migrators.Length; i++)
+                    {
+                        if (!PhotonIdToFishNet.TryGetValue(migrators[i].playerID, out int index)) continue;
+                        if(index == entry.Value.ClientId)
+                        {
+                            Debug.Log(entry.Value.ClientId);
+                            
+                            migrators[i].GetComponent<NetworkObject>().GiveOwnership(entry.Value);
+                            Debug.Log("dpfjkñs");
+                        }
+                    }
+                }
+
+            }
         }
 
         #endregion
     }
-
 }
