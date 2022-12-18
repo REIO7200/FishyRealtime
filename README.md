@@ -23,10 +23,6 @@ Photon Realtime: https://www.photonengine.com/en-US/Realtime
 12. You can leave the socket type to UDP, but if you are making a WebGL game, change it to Web Socket
 13. Thats it! 
 
-## Client 
+## Matchmaking
 
-To connect as a client, put the room name you want to connect to and use NetworkManager.ClientManager.StartConnection()
-
-## Server
-
-To start a server, put the room name you want to connect to and use NetworkManager.ServerManager.StartConnection()
+FishyRealtime has its own matchmakign, documentation soon
