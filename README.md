@@ -27,3 +27,6 @@ Photon Realtime: https://www.photonengine.com/en-US/Realtime
 
 FishyRealtime has its own matchmaking, documentated [here](https://github.com/REIO7200/FishyRealtime/blob/Matchmaking/FishyRealtime/MatchmakingAPI.md)
 
+## About the pricing
+
+FishyRealtime is completely free to use, but photon realime isnt. More info [here](https://www.photonengine.com/en/realtime/pricing#)
