@@ -76,7 +76,7 @@ namespace FishyRealtime
 
         public static FishyRealtime Instance;
 
-        //Do I have to explain what is?
+        //This is cached to avoid allocations
         private RaiseEventOptions eventOptions = new RaiseEventOptions()
         {
             TargetActors = new int[1]
@@ -88,11 +88,18 @@ namespace FishyRealtime
         [Tooltip("The version of the product(Game), only clients with the same version can connect to each other")]
         public string appVersion = "0.0.1";
 
+        [Header("Default room options")]
         [Tooltip("The name of the room to create or join")]
         public string roomName = "Room";
 
         [Tooltip("Default max players")]
         public byte maxPlayers = 10;
+
+        [Tooltip("Should this room apper on the room list?")]
+        public bool isVisible = true;
+
+        [Tooltip("Can players join this room?")]
+        public bool isOpen = true;
 
         [Tooltip("What is goinng to be used to connect")]
         public ConnectionProtocol connectionProtocol;
@@ -106,10 +113,9 @@ namespace FishyRealtime
         Dictionary<string, RoomInfo> cachedRooms = new Dictionary<string, RoomInfo>();
 
 
-        //?
         public override string GetConnectionAddress(int connectionId)
         {
-            return "";
+            return (connectionId + 1).ToString();
         }
 
         //Set the room name
@@ -265,7 +271,8 @@ namespace FishyRealtime
         {
             //If it is a internal event, nothing to do
             if (photonEvent.Code >= 200) return;
-
+            //Kick event
+            if (photonEvent.Code == 1) LeaveRoom();
             using (ByteArraySlice byteArraySlice = photonEvent.CustomData as ByteArraySlice)
             {
                 ArraySegment<byte> data = new ArraySegment<byte>(byteArraySlice.Buffer, byteArraySlice.Offset, byteArraySlice.Count);
@@ -364,10 +371,11 @@ namespace FishyRealtime
             return true;
         }
 
-        //IDK what to do with this      
+        //Send it as a event, IDK if its good to make it like that
         public override bool StopConnection(int connectionId, bool immediately)
         {
-            return false;
+            eventOptions.TargetActors[0] = connectionId + 1;
+            return client.OpRaiseEvent(1, null, eventOptions, SendOptions.SendReliable);
         }
 
         public override void Shutdown()
@@ -534,8 +542,8 @@ namespace FishyRealtime
                     RoomName = "Room " + UnityEngine.Random.Range(0, 1000).ToString(),
                     RoomOptions = new RoomOptions()
                     {
-                        IsOpen = true,
-                        IsVisible = true,
+                        IsOpen = isOpen,
+                        IsVisible = isVisible,
                         MaxPlayers = maxPlayers
                     },
                 };
@@ -553,15 +561,11 @@ namespace FishyRealtime
         /// <param name="createOnFail">True to create a room if failed to join</param>
         public void JoinRandomRoom(RoomFilter filter, bool createOnFail = false)
         {
-            ExitGames.Client.Photon.Hashtable customProperties = new ExitGames.Client.Photon.Hashtable()
-            {
-                {
-                    "Map", filter.mapName
-                },
-                {
-                    "GameMode", filter.gameMode
-                }
-            };
+            ExitGames.Client.Photon.Hashtable customProperties = new ExitGames.Client.Photon.Hashtable();
+
+            if (filter.gameMode != null) customProperties.Add("GameMode", filter.gameMode);
+            if (filter.mapName != null) customProperties.Add("Map", filter.gameMode);
+
             OpJoinRandomRoomParams joinParams = new OpJoinRandomRoomParams()
             {
                 ExpectedCustomRoomProperties = customProperties
@@ -574,7 +578,7 @@ namespace FishyRealtime
                     RoomOptions = new RoomOptions()
                     {
                         CustomRoomProperties = customProperties
-                    }
+                    },
                 };
                 client.OpJoinRandomOrCreateRoom(joinParams, enterParams);
             }
@@ -592,9 +596,10 @@ namespace FishyRealtime
         /// <param name="info">The data used to create the room</param>
         public void CreateRoom(Room info)
         {
+            string roomName = info.name == null ? "Room " + UnityEngine.Random.Range(0, 1000) : info.name;
             EnterRoomParams roomParams = new EnterRoomParams()
             {
-                RoomName = info.name,
+                RoomName = roomName,
                 RoomOptions = new RoomOptions()
                 {
                     MaxPlayers = info.maxPlayers,
@@ -612,9 +617,10 @@ namespace FishyRealtime
         /// <param name="customData"></param>
         public void CreateRoom(Room info, RoomFilter customData)
         {
+            string roomName = info.name == null ? "Room " + UnityEngine.Random.Range(0, 1000) : info.name;
             EnterRoomParams roomParams = new EnterRoomParams()
             {
-                RoomName = info.name,
+                RoomName = roomName,
                 RoomOptions = new RoomOptions()
                 {
                     MaxPlayers = info.maxPlayers,
@@ -786,6 +792,7 @@ namespace FishyRealtime
 
         public void ConnectToRegion(Region region)
         {
+            if (client.IsConnected) Disconnect();
             client.AddCallbackTarget(this);
 
             string regionStr;

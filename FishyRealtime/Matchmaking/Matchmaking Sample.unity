@@ -360,10 +360,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62da07589db47b542b2cb0666e8ec287, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  photonAppId: 49eb837d-ff5c-4e01-ac1a-3ffa3316294d
+  photonAppId: _
   appVersion: 0.0.1
   roomName: Room
   maxPlayers: 10
+  isVisible: 1
+  isOpen: 1
   connectionProtocol: 0
   region: 3
 --- !u!114 &56776231
