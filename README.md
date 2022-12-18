@@ -25,4 +25,5 @@ Photon Realtime: https://www.photonengine.com/en-US/Realtime
 
 ## Matchmaking
 
-FishyRealtime has its own matchmakign, documentation soon
+FishyRealtime has its own matchmaking, documentated [here](https://github.com/REIO7200/FishyRealtime/blob/Matchmaking/FishyRealtime/MatchmakingAPI.md)
+
