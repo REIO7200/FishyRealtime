@@ -53,7 +53,7 @@ namespace FishyRealtime.Samples
         {
             connectedToMaster = true;
             loadingScreen.SetActive(false);
-            SearchForRooms();
+            //SearchForRooms();
         }
 
         // Update is called once per frame

@@ -4,14 +4,7 @@ using UnityEngine;
 using FishNet.Transporting;
 using System;
 using Photon.Realtime;
-using FishNet;
 using ExitGames.Client.Photon;
-using FishNet.Managing.Transporting;
-using FishNet.Managing.Logging;
-using FishNet.Object;
-using FishNet.Connection;
-
-using Room = FishyRealtime.Room;
 
 namespace FishyRealtime
 {
@@ -71,7 +64,6 @@ namespace FishyRealtime
 
     public class FishyRealtime : Transport, IConnectionCallbacks, IMatchmakingCallbacks, IOnEventCallback, IInRoomCallbacks, ILobbyCallbacks
     {
-
         private LoadBalancingClient client = new LoadBalancingClient();
 
         public static FishyRealtime Instance;
@@ -89,9 +81,7 @@ namespace FishyRealtime
         public string appVersion = "0.0.1";
 
         [Header("Default room options")]
-        [Tooltip("The name of the room to create or join")]
-        public string roomName = "Room";
-
+        
         [Tooltip("Default max players")]
         public byte maxPlayers = 10;
 
@@ -118,20 +108,25 @@ namespace FishyRealtime
             return (connectionId + 1).ToString();
         }
 
-        //Set the room name
+        //Not used
         public override void SetClientAddress(string address)
         {
-            roomName = address;
+            
         }
 
         private void Awake()
         {
+            //Make sure thre is not any other instances
             if (Instance != null) Destroy(Instance);
+            //Assign the instance
             Instance = this;
+            //Connect to master
             ConnectToRegion(region);
         }
 
         #region Connection state
+
+        //Some events that FishNet uses
         public override event Action<ClientConnectionStateArgs> OnClientConnectionState;
         public override event Action<ServerConnectionStateArgs> OnServerConnectionState;
         public override event Action<RemoteConnectionStateArgs> OnRemoteConnectionState;
@@ -167,14 +162,19 @@ namespace FishyRealtime
 
         public override RemoteConnectionState GetConnectionState(int connectionId)
         {
+            //I use a try catch, since current room can be null
             try
             {
+                //If there is no player, return stopped
+                //This should never happen
                 if (client.CurrentRoom.Players[connectionId] == null) return RemoteConnectionState.Stopped;
             }
             catch
             {
+                //If we are outside a room, return stopped
                 return RemoteConnectionState.Stopped;
             }
+            //Then check if the player is active
             if (client.CurrentRoom.Players[connectionId].IsInactive)
             {
                 return RemoteConnectionState.Stopped;
@@ -190,6 +190,7 @@ namespace FishyRealtime
 
         public override void SendToServer(byte channelId, ArraySegment<byte> segment)
         {
+            //Decide what channel to use
             SendOptions options = channelId == (byte)Channel.Reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable;
             
             //Sometimes the segment isnt large enough
@@ -207,22 +208,25 @@ namespace FishyRealtime
 
             segment = new ArraySegment<byte>(segment.Array, segment.Offset, segment.Count + 1);
 
+            //If we are host, 
             if(NetworkManager.IsHost)
             {
-                SendHost(segment, true);
+                SendHost(segment);
                 return;
             }
 
+            //We only want to send data to the master client
             RaiseEventOptions raiseOptions = new RaiseEventOptions()
             {
                 Receivers = ReceiverGroup.MasterClient
             };
-
+            //Send the data
             client.OpRaiseEvent(0, segment, raiseOptions, options);
         }
 
         public override void SendToClient(byte channelId, ArraySegment<byte> segment, int connectionId)
         {
+            //Decide what channel to use
             SendOptions options = channelId == (byte)Channel.Reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable;
 
             //Sometimes the segment isnt large enough
@@ -243,8 +247,11 @@ namespace FishyRealtime
             //Set the ID of the connection where we want to send
             eventOptions.TargetActors[0] = connectionId + 1;
 
+            //Send the data
             client.OpRaiseEvent(0, segment, eventOptions, options);
         }
+
+        //Internal FishNet things
 
         public override void HandleClientReceivedDataArgs(ClientReceivedDataArgs receivedDataArgs)
         {
@@ -258,12 +265,12 @@ namespace FishyRealtime
 
         public override void IterateIncoming(bool server)
         {
-            client.Service();
+            client.LoadBalancingPeer.DispatchIncomingCommands();
         }
 
         public override void IterateOutgoing(bool server)
         {
-            client.Service();
+            client.LoadBalancingPeer.SendOutgoingCommands();
         }
 
         //Called when a photon event is received
@@ -275,10 +282,13 @@ namespace FishyRealtime
             if (photonEvent.Code == 1) LeaveRoom();
             using (ByteArraySlice byteArraySlice = photonEvent.CustomData as ByteArraySlice)
             {
+                //The data received
                 ArraySegment<byte> data = new ArraySegment<byte>(byteArraySlice.Buffer, byteArraySlice.Offset, byteArraySlice.Count);
+
                 if (photonEvent.Sender == client.CurrentRoom.MasterClientId)
                 {
                     //Sent by server
+                    //The channel is "encoded" on the ArraySegment
                     byte channelId = data[data.Count - 1];
                     data = new ArraySegment<byte>(byteArraySlice.Buffer, 0, data.Count - 1);
                     Channel channel = channelId == 0 ? Channel.Reliable : Channel.Unreliable;
@@ -287,6 +297,8 @@ namespace FishyRealtime
                 }
                 else
                 {
+                    //Sent by client
+                    //The channel is "encoded" on the ArraySegment
                     byte channelId = data[data.Count - 1];
                     data = new ArraySegment<byte>(byteArraySlice.Buffer, 0, data.Count - 1);
                     Channel channel = channelId == 0 ? Channel.Reliable : Channel.Unreliable;
@@ -297,76 +309,46 @@ namespace FishyRealtime
         }
 
         //A fake method for receiving data as host
-        void SendHost(ArraySegment<byte> data, bool server)
+        void SendHost(ArraySegment<byte> data)
         {
-            if(server)
-            {
-                byte channelId = data[data.Count - 1];
-                data = new ArraySegment<byte>(data.Array, 0, data.Count - 1);
-                Channel channel = channelId == 0 ? Channel.Reliable : Channel.Unreliable;
-                ServerReceivedDataArgs args = new ServerReceivedDataArgs(data, channel, 0, Index);
-                HandleServerReceivedDataArgs(args);
-            }
-            else
-            {
-                byte channelId = data[data.Count - 1];
-                data = new ArraySegment<byte>(data.Array, 0, data.Count - 1);
-                Channel channel = channelId == 0 ? Channel.Reliable : Channel.Unreliable;
-                ClientReceivedDataArgs args = new ClientReceivedDataArgs(data, channel, Index);
-                HandleClientReceivedDataArgs(args);
-            }
+            byte channelId = data[data.Count - 1];
+            data = new ArraySegment<byte>(data.Array, 0, data.Count - 1);
+            Channel channel = channelId == 0 ? Channel.Reliable : Channel.Unreliable;
+            ServerReceivedDataArgs args = new ServerReceivedDataArgs(data, channel, 0, Index);
+            HandleServerReceivedDataArgs(args);
         }
 
         #endregion
 
         #region Connecting
         
+        //It will just create or join a room
         public override bool StartConnection(bool server)
         {
-            if (server)
+            if(server)
             {
-                ServerConnectionStateArgs args = new ServerConnectionStateArgs(GetConnectionState(true), Index);
-                HandleServerConnectionState(args);
+                Room room = new Room()
+                {
+                    //A random name
+                    name = "Room " + UnityEngine.Random.Range(0, 1000).ToString(),
+                    //Use the default settings
+                    isPublic = isVisible,
+                    open = isOpen,
+                    maxPlayers = maxPlayers
+                };
+                CreateRoom(room);
             }
             else
             {
-                ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(GetConnectionState(false), Index);
-                HandleClientConnectionState(clientArgs);
-                if (NetworkManager.IsServer)
-                {
-                    RemoteConnectionStateArgs state = new RemoteConnectionStateArgs(RemoteConnectionState.Started, 0, Index);
-                    HandleRemoteConnectionState(state);
-                }
+                JoinRandomRoom();
             }
-            
             return true;
         }
 
+        //Leave the room
         public override bool StopConnection(bool server)
         {
-            client.Disconnect();
-
-            client.RemoveCallbackTarget(this);
-            if (!server && NetworkManager.IsServer)
-            {
-                ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
-                HandleClientConnectionState(clientArgs);
-                RemoteConnectionStateArgs state = new RemoteConnectionStateArgs(RemoteConnectionState.Stopped, 0, Index);
-                HandleRemoteConnectionState(state);
-                return true;
-            }
-            
-            if (server)
-            {
-                ServerConnectionStateArgs args = new ServerConnectionStateArgs(GetConnectionState(true), Index);
-                HandleServerConnectionState(args);
-            }
-            else
-            {
-                ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(GetConnectionState(false), Index);
-                HandleClientConnectionState(clientArgs);
-            }
-
+            LeaveRoom();
             
             return true;
         }
@@ -380,27 +362,18 @@ namespace FishyRealtime
 
         public override void Shutdown()
         {
-            client.Disconnect();
-            client.RemoveCallbackTarget(this);
+            Disconnect();
         }
-
-        public void OnConnectedToMaster()
-        {
-            ConnectedToMaster.Invoke(this, EventArgs.Empty);
-            client.OpJoinLobby(TypedLobby.Default);
-        }
-
-        public event EventHandler ConnectedToMaster;
 
         public void OnDisconnected(DisconnectCause cause)
         {
-            Debug.Log("Fishy Realtime disconnected" + cause);
+            //Some simple logging
+            Debug.Log("Fishy Realtime disconnected " + cause);
         }
 
         public void OnCreatedRoom()
         {
-            ServerConnectionStateArgs args = new ServerConnectionStateArgs(GetConnectionState(true), Index);
-            HandleServerConnectionState(args);
+            
         }
 
         public void OnCreateRoomFailed(short returnCode, string message)
@@ -410,6 +383,7 @@ namespace FishyRealtime
 
         public void OnJoinedRoom()
         {
+            //If started server
             if (client.LocalPlayer.IsMasterClient)
             {
                 ServerConnectionStateArgs serverArgs = new ServerConnectionStateArgs(GetConnectionState(true), Index);
@@ -417,13 +391,15 @@ namespace FishyRealtime
                 RemoteConnectionStateArgs remoteArgs = new RemoteConnectionStateArgs(RemoteConnectionState.Started, 0, Index);
                 HandleRemoteConnectionState(remoteArgs);
             }
-            
+            //Always start client
             ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(GetConnectionState(false), Index);
             HandleClientConnectionState(clientArgs);
+            //If there is a name, set it
             if (cahedPlayerName != "") client.LocalPlayer.NickName = cahedPlayerName;
           
         }
 
+        //Logging
         public void OnJoinRoomFailed(short returnCode, string message)
         {
             Debug.Log("Fishy Realtime failed to connect, " + message + " " + returnCode);
@@ -431,10 +407,9 @@ namespace FishyRealtime
 
         public void OnLeftRoom()
         {
-            Debug.Log("Fishy Realtime left room");
         }
 
-
+        //A remote connection has to be 
         public void OnPlayerEnteredRoom(Player newPlayer)
         {
             if (NetworkManager.IsServer)
@@ -446,15 +421,28 @@ namespace FishyRealtime
 
         public void OnPlayerLeftRoom(Player otherPlayer)
         {
+            if (otherPlayer.ActorNumber == 1)
+            {
+                InternalLeaveRoom();
+                return;
+            }
             if (NetworkManager.IsServer)
             {
                 if (otherPlayer.ActorNumber == 1 && otherPlayer != client.LocalPlayer) return;
+                //Stop the remote connection
                 RemoteConnectionStateArgs state = new RemoteConnectionStateArgs(GetConnectionState(otherPlayer.ActorNumber), otherPlayer.ActorNumber - 1, Index);
                 HandleRemoteConnectionState(state);
             }
         }
+
+        public void OnJoinRandomFailed(short returnCode, string message)
+        {
+            ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
+            HandleClientConnectionState(clientArgs);
+        }
         #endregion
 
+        //Photons default MTU
         public override int GetMTU(byte channel)
         {
             return 1200;
@@ -486,14 +474,6 @@ namespace FishyRealtime
         public void OnFriendListUpdate(List<FriendInfo> friendList)
         {
             
-        }
-
-
-
-        public void OnJoinRandomFailed(short returnCode, string message)
-        {
-            ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
-            HandleClientConnectionState(clientArgs);
         }
         
         public void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
@@ -776,7 +756,14 @@ namespace FishyRealtime
                 ServerConnectionStateArgs args = new ServerConnectionStateArgs(LocalConnectionState.Stopped, Index);
                 HandleServerConnectionState(args);
             }
-            client.OpLeaveRoom(false);
+            client.OpLeaveRoom(true);
+            ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
+            HandleClientConnectionState(clientArgs);
+        }
+
+        private void InternalLeaveRoom()
+        {
+            client.OpLeaveRoom(true);
             ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
             HandleClientConnectionState(clientArgs);
         }
@@ -859,6 +846,15 @@ namespace FishyRealtime
 
             client.ConnectUsingSettings(settings);
         }
+
+        public void OnConnectedToMaster()
+        {
+            //No args are needed
+            ConnectedToMaster.Invoke(this, EventArgs.Empty);
+            client.OpJoinLobby(TypedLobby.Default);
+        }
+
+        public event EventHandler ConnectedToMaster;
 
         public void OnRoomListUpdate(List<RoomInfo> roomList)
         {

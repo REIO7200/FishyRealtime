@@ -243,7 +243,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: SetUsername
         m_Mode: 0
@@ -324,7 +324,6 @@ GameObject:
   - component: {fileID: 56776231}
   - component: {fileID: 56776230}
   - component: {fileID: 56776233}
-  - component: {fileID: 56776235}
   - component: {fileID: 56776236}
   m_Layer: 0
   m_Name: NetworkManager
@@ -360,9 +359,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62da07589db47b542b2cb0666e8ec287, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  photonAppId: _
+  photonAppId: 49eb837d-ff5c-4e01-ac1a-3ffa3316294d
   appVersion: 0.0.1
-  roomName: Room
   maxPlayers: 10
   isVisible: 1
   isOpen: 1
@@ -403,7 +401,7 @@ MonoBehaviour:
   _runInBackground: 1
   _dontDestroyOnLoad: 1
   _objectPool: {fileID: 0}
-  _persistence: 0
+  _persistence: 1
   _logging: {fileID: 0}
   _spawnablePrefabs: {fileID: 11400000, guid: ec64eb18c93ab344892891f33edbf82a, type: 2}
 --- !u!114 &56776233
@@ -419,24 +417,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerPrefab: {fileID: 6666197886883913062, guid: 1af54c9347d1c2c4a817465723eaeca6, type: 3}
-  _addToDefaultScene: 1
+  _addToDefaultScene: 0
   Spawns: []
---- !u!114 &56776235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 56776228}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b389a88226d8b5d4eab7e4c164fbd2ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  loadingScreen: {fileID: 743035923}
-  buttonPrefab: {fileID: 7265035738808460320, guid: 10057d1b7643c16429f22683fb7d4fe6, type: 3}
-  roomListPanel: {fileID: 864882634}
-  loginPanel: {fileID: 306401299}
 --- !u!114 &56776236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -662,7 +644,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: SetMaxPlayers
         m_Mode: 0
@@ -966,7 +948,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: SetListGamemode
         m_Mode: 0
@@ -1319,7 +1301,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: SearchForRooms
         m_Mode: 1
@@ -1714,7 +1696,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: SetRoomName
         m_Mode: 0
@@ -2080,7 +2062,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: SetIsPublic
         m_Mode: 0
@@ -2093,6 +2075,54 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   m_IsOn: 1
+--- !u!1 &350474257
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 350474258}
+  - component: {fileID: 350474259}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &350474258
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 350474257}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &350474259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 350474257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b389a88226d8b5d4eab7e4c164fbd2ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  loadingScreen: {fileID: 743035923}
+  buttonPrefab: {fileID: 7265035738808460320, guid: 10057d1b7643c16429f22683fb7d4fe6, type: 3}
+  roomListPanel: {fileID: 864882634}
+  loginPanel: {fileID: 306401299}
 --- !u!1 &358815444
 GameObject:
   m_ObjectHideFlags: 0
@@ -2289,7 +2319,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: SetJoinRoomName
         m_Mode: 0
@@ -2550,7 +2580,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: Login
         m_Mode: 1
@@ -4822,7 +4852,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: CreateRoom
         m_Mode: 1
@@ -6063,7 +6093,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: JoinRoom
         m_Mode: 1
@@ -7619,7 +7649,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: JoinRandom
         m_Mode: 1
@@ -8129,7 +8159,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 56776235}
+      - m_Target: {fileID: 350474259}
         m_TargetAssemblyTypeName: FishyRealtime.Samples.GameManager, Assembly-CSharp
         m_MethodName: SetGamemode
         m_Mode: 0
