@@ -5,6 +5,7 @@ using FishNet.Transporting;
 using System;
 using Photon.Realtime;
 using ExitGames.Client.Photon;
+using UnityEditor;
 
 namespace FishyRealtime
 {
@@ -62,6 +63,7 @@ namespace FishyRealtime
         USAWest = 13
     }
 
+    [InitializeOnLoad]
     public class FishyRealtime : Transport, IConnectionCallbacks, IMatchmakingCallbacks, IOnEventCallback, IInRoomCallbacks, ILobbyCallbacks
     {
         private LoadBalancingClient client = new LoadBalancingClient();
@@ -122,6 +124,18 @@ namespace FishyRealtime
             Instance = this;
             //Connect to master
             ConnectToRegion(region);
+
+            EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
+        }
+
+        private void EditorApplication_playModeStateChanged(PlayModeStateChange obj)
+        {
+            if (obj == PlayModeStateChange.ExitingPlayMode) Disconnect();
+        }
+
+        private void OnApplicationQuit()
+        {
+            Disconnect();
         }
 
         #region Connection state
@@ -423,7 +437,7 @@ namespace FishyRealtime
         {
             if (otherPlayer.ActorNumber == 1)
             {
-                InternalLeaveRoom();
+                LeaveRoom();
                 return;
             }
             if (NetworkManager.IsServer)
@@ -751,21 +765,15 @@ namespace FishyRealtime
         /// </summary>
         public void LeaveRoom()
         {
-            if(client.LocalPlayer.IsMasterClient)
+            ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
+            HandleClientConnectionState(clientArgs);
+            if (client.LocalPlayer.IsMasterClient)
             {
                 ServerConnectionStateArgs args = new ServerConnectionStateArgs(LocalConnectionState.Stopped, Index);
                 HandleServerConnectionState(args);
             }
-            client.OpLeaveRoom(true);
-            ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
-            HandleClientConnectionState(clientArgs);
-        }
 
-        private void InternalLeaveRoom()
-        {
             client.OpLeaveRoom(true);
-            ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
-            HandleClientConnectionState(clientArgs);
         }
 
         /// <summary>
@@ -773,6 +781,7 @@ namespace FishyRealtime
         /// </summary>
         public void Disconnect()
         {
+            LeaveRoom();
             client.Disconnect();
             client.RemoveCallbackTarget(this);
         }
