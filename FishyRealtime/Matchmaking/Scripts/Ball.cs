@@ -3,26 +3,29 @@ using System.Collections.Generic;
 using UnityEngine;
 using FishNet.Object;
 
-public class Ball : NetworkBehaviour
+namespace FishyRealtime.Samples
 {
-    Rigidbody rb;
-
-    public float velocity;
-
-    public override void OnStartServer()
+    public class Ball : NetworkBehaviour
     {
-        base.OnStartServer();
-        Vector3 dir = new Vector3(Random.Range(0.0f, 1.0f), 0.0f, Random.Range(0.0f, 1.0f)).normalized;
-        rb = GetComponent<Rigidbody>();
-        rb.velocity = dir * velocity;
-    }
+        Rigidbody rb;
 
-    void FixedUpdate()
-    {
-        if(base.IsServer)
+        public float velocity;
+
+        public override void OnStartServer()
         {
-            Vector3 dir = rb.velocity.normalized;
+            base.OnStartServer();
+            Vector3 dir = new Vector3(Random.Range(0.0f, 1.0f), 0.0f, Random.Range(0.0f, 1.0f)).normalized;
+            rb = GetComponent<Rigidbody>();
             rb.velocity = dir * velocity;
+        }
+
+        void FixedUpdate()
+        {
+            if (base.IsServer)
+            {
+                Vector3 dir = rb.velocity.normalized;
+                rb.velocity = dir * velocity;
+            }
         }
     }
 }
