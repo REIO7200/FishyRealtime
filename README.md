@@ -4,7 +4,7 @@ A photon realtime transport for Fish-Networking
 
 ## Dependencies
 
-Fish-Netowking: https://github.com/FirstGearGames/FishNet
+Fish-Networking: https://github.com/FirstGearGames/FishNet
 
 Photon Realtime: https://www.photonengine.com/en-US/Realtime
 
@@ -23,10 +23,10 @@ Photon Realtime: https://www.photonengine.com/en-US/Realtime
 12. You can leave the socket type to UDP, but if you are making a WebGL game, change it to Web Socket
 13. Thats it! 
 
-## Client 
+## Matchmaking
 
-To connect as a client, put the room name you want to connect to and use NetworkManager.ClientManager.StartConnection()
+FishyRealtime has its own matchmaking, documentated [here](https://github.com/REIO7200/FishyRealtime/blob/Matchmaking/FishyRealtime/MatchmakingAPI.md)
 
-## Server
+## About the pricing
 
-To start a server, put the room name you want to connect to and use NetworkManager.ServerManager.StartConnection()
+FishyRealtime is completely free to use, but photon realime isnt. More info [here](https://www.photonengine.com/en/realtime/pricing#)
