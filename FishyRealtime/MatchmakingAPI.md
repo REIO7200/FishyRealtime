@@ -7,10 +7,10 @@ In order to use this, you **MUST** be connected to the master server. You can su
 ## Functions and Fields
 
 ### void JoinRandomRoom(bool createOnFail = false)
-Find all rooms on the master server, if a room is found it will join it. Set createOnFail to true if you want to create a room if no room was found
+It will join a random room on the master server. Set createOnFail to true if you want to create a room if no room was found
 
 ### void JoinRandomRoom(RoomFilter filter, bool createOnFail = false)
-Find all rooms that have the specified RoomFilter, if a room is found it will join it. Set createOnFail to true if you want to create a room if no room was found
+It will join a random room on the master server with the specified filter. Set createOnFail to true if you want to create a room if no room was found
 
 **Note**: If the RoomFilter's map or gamemode field is empty, that field will be ignored
 
@@ -54,6 +54,9 @@ The name of the player, keep in mind that this transport doesnt have a account s
 
 ### public string GetPlayerName(int id)
 Returns the username of the specified player
+
+### public static bool isConnectedToMaster
+Is the player connected to the master server?
 
 ## Structs and Enums
 
