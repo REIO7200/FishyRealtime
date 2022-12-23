@@ -9,6 +9,6 @@ namespace FishyRealtime.Samples
         public void LeaveRoom()
         {
             FishyRealtime.Instance.LeaveRoom();
-        }
+        }   
     }
 }

@@ -43,12 +43,17 @@ namespace FishyRealtime.Samples
         {
             if (Instance != null) Destroy(Instance);
             Instance = this;
+            if (FishyRealtime.isConnectedToMaster)
+            {
+                connectedToMaster = true;
+                return;
+            }
             loginPanel.SetActive(true);
             loadingScreen.SetActive(true);
             FishyRealtime.Instance.ConnectedToMaster += FishyRealtime_ConnectedToMaster;
         }
 
-        
+
         private void FishyRealtime_ConnectedToMaster(object sender, System.EventArgs e)
         {
             connectedToMaster = true;
@@ -128,6 +133,11 @@ namespace FishyRealtime.Samples
 
         #endregion
 
+        void OnDestroy()
+        {
+            FishyRealtime.Instance.ConnectedToMaster -= FishyRealtime_ConnectedToMaster;
+        }
+
         #region Join Room
 
         public void SetJoinRoomName(string roomName)
@@ -150,7 +160,7 @@ namespace FishyRealtime.Samples
 
         public void Login()
         {
-            if(FishyRealtime.Instance.playerName == null)
+            if (FishyRealtime.Instance.playerName == null)
             {
                 Debug.LogError("Username is null!");
                 return;

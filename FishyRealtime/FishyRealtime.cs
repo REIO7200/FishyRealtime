@@ -83,7 +83,7 @@ namespace FishyRealtime
         public string appVersion = "0.0.1";
 
         [Header("Default room options")]
-        
+
         [Tooltip("Default max players")]
         public byte maxPlayers = 10;
 
@@ -113,7 +113,7 @@ namespace FishyRealtime
         //Not used
         public override void SetClientAddress(string address)
         {
-            
+
         }
 
         private void Awake()
@@ -204,9 +204,10 @@ namespace FishyRealtime
 
         public override void SendToServer(byte channelId, ArraySegment<byte> segment)
         {
+            if (!client.InRoom) return;
             //Decide what channel to use
             SendOptions options = channelId == (byte)Channel.Reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable;
-            
+
             //Sometimes the segment isnt large enough
             if ((segment.Array.Length - 1) <= (segment.Offset + segment.Count))
             {
@@ -223,7 +224,7 @@ namespace FishyRealtime
             segment = new ArraySegment<byte>(segment.Array, segment.Offset, segment.Count + 1);
 
             //If we are host, 
-            if(NetworkManager.IsHost)
+            if (NetworkManager.IsHost)
             {
                 SendHost(segment);
                 return;
@@ -240,6 +241,7 @@ namespace FishyRealtime
 
         public override void SendToClient(byte channelId, ArraySegment<byte> segment, int connectionId)
         {
+            if (!client.InRoom) return;
             //Decide what channel to use
             SendOptions options = channelId == (byte)Channel.Reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable;
 
@@ -335,11 +337,11 @@ namespace FishyRealtime
         #endregion
 
         #region Connecting
-        
+
         //It will just create or join a room
         public override bool StartConnection(bool server)
         {
-            if(server)
+            if (server)
             {
                 Room room = new Room()
                 {
@@ -363,7 +365,7 @@ namespace FishyRealtime
         public override bool StopConnection(bool server)
         {
             LeaveRoom();
-            
+
             return true;
         }
 
@@ -381,13 +383,14 @@ namespace FishyRealtime
 
         public void OnDisconnected(DisconnectCause cause)
         {
+            isConnectedToMaster = false;
             //Some simple logging
             Debug.Log("Fishy Realtime disconnected " + cause);
         }
 
         public void OnCreatedRoom()
         {
-            
+
         }
 
         public void OnCreateRoomFailed(short returnCode, string message)
@@ -410,7 +413,7 @@ namespace FishyRealtime
             HandleClientConnectionState(clientArgs);
             //If there is a name, set it
             if (cahedPlayerName != "") client.LocalPlayer.NickName = cahedPlayerName;
-          
+
         }
 
         //Logging
@@ -421,6 +424,15 @@ namespace FishyRealtime
 
         public void OnLeftRoom()
         {
+            ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
+            HandleClientConnectionState(clientArgs);
+            if (NetworkManager.IsServer)
+            {
+                RemoteConnectionStateArgs argsRemote = new RemoteConnectionStateArgs(RemoteConnectionState.Stopped, 0, Index);
+                HandleRemoteConnectionState(argsRemote);
+                ServerConnectionStateArgs args = new ServerConnectionStateArgs(LocalConnectionState.Stopped, Index);
+                HandleServerConnectionState(args);
+            }
         }
 
         //A remote connection has to be 
@@ -487,9 +499,9 @@ namespace FishyRealtime
 
         public void OnFriendListUpdate(List<FriendInfo> friendList)
         {
-            
+
         }
-        
+
         public void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
         {
 
@@ -564,7 +576,7 @@ namespace FishyRealtime
             {
                 ExpectedCustomRoomProperties = customProperties
             };
-            if(createOnFail)
+            if (createOnFail)
             {
                 EnterRoomParams enterParams = new EnterRoomParams()
                 {
@@ -629,7 +641,7 @@ namespace FishyRealtime
                             "GameMode", customData.gameMode
                         }
                     },
-                    CustomRoomPropertiesForLobby = new string[]{"Map", "GameMode"}
+                    CustomRoomPropertiesForLobby = new string[] { "Map", "GameMode" }
                 }
             };
 
@@ -651,7 +663,7 @@ namespace FishyRealtime
             {
                 RoomName = name
             };
-            
+
             client.OpJoinRoom(roomParams);
             ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(GetConnectionState(false), Index);
             HandleClientConnectionState(clientArgs);
@@ -692,7 +704,7 @@ namespace FishyRealtime
                 open = currRoom.IsOpen,
                 maxPlayers = currRoom.MaxPlayers,
                 playerCount = currRoom.PlayerCount
-                
+
             };
             return room;
         }
@@ -743,9 +755,9 @@ namespace FishyRealtime
             List<Room> rooms = new List<Room>();
             foreach (KeyValuePair<string, RoomInfo> entry in cachedRooms)
             {
-                if(entry.Value.CustomProperties.TryGetValue("GameMode", out object gameMode)) if(filter.gameMode != null && filter.gameMode != gameMode.ToString()) continue;
+                if (entry.Value.CustomProperties.TryGetValue("GameMode", out object gameMode)) if (filter.gameMode != null && filter.gameMode != gameMode.ToString()) continue;
 
-                if(entry.Value.CustomProperties.TryGetValue("Map", out object mapName)) if(filter.mapName != null && filter.mapName != mapName.ToString()) continue;
+                if (entry.Value.CustomProperties.TryGetValue("Map", out object mapName)) if (filter.mapName != null && filter.mapName != mapName.ToString()) continue;
 
                 Room room = new Room()
                 {
@@ -765,14 +777,6 @@ namespace FishyRealtime
         /// </summary>
         public void LeaveRoom()
         {
-            ClientConnectionStateArgs clientArgs = new ClientConnectionStateArgs(LocalConnectionState.Stopped, Index);
-            HandleClientConnectionState(clientArgs);
-            if (client.LocalPlayer.IsMasterClient)
-            {
-                ServerConnectionStateArgs args = new ServerConnectionStateArgs(LocalConnectionState.Stopped, Index);
-                HandleServerConnectionState(args);
-            }
-
             client.OpLeaveRoom(true);
         }
 
@@ -781,7 +785,7 @@ namespace FishyRealtime
         /// </summary>
         public void Disconnect()
         {
-            LeaveRoom();
+            if(client.InRoom)LeaveRoom();
             client.Disconnect();
             client.RemoveCallbackTarget(this);
         }
@@ -858,8 +862,9 @@ namespace FishyRealtime
 
         public void OnConnectedToMaster()
         {
+            isConnectedToMaster = true;
             //No args are needed
-            ConnectedToMaster.Invoke(this, EventArgs.Empty);
+            if(ConnectedToMaster != null) ConnectedToMaster.Invoke(this, EventArgs.Empty);
             client.OpJoinLobby(TypedLobby.Default);
         }
 
@@ -870,7 +875,7 @@ namespace FishyRealtime
             for (int i = 0; i < roomList.Count; i++)
             {
                 //If the room was deleted, remove it from list
-                if(roomList[i].RemovedFromList)
+                if (roomList[i].RemovedFromList)
                 {
                     cachedRooms.Remove(roomList[i].Name);
                 }
@@ -916,5 +921,7 @@ namespace FishyRealtime
         }
 
         #endregion
+
+        public static bool isConnectedToMaster = false;
     }
 }
