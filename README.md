@@ -1,6 +1,7 @@
 # FishyRealtime
 A photon realtime transport for Fish-Networking
 
+If you have any issues, ping me (REIO 7200#2377) on the [FirstGearGames discord](https://discord.gg/Ta9HgDh4Hj)
 
 ## Dependencies
 
@@ -25,7 +26,7 @@ Photon Realtime: https://www.photonengine.com/en-US/Realtime
 
 ## Matchmaking
 
-FishyRealtime has its own matchmaking, documentated [here](https://github.com/REIO7200/FishyRealtime/blob/Matchmaking/FishyRealtime/MatchmakingAPI.md)
+FishyRealtime has its own matchmaking, documentated [here](https://github.com/REIO7200/FishyRealtime/blob/main/FishyRealtime/MatchmakingAPI.md)
 
 ## About the pricing
 
