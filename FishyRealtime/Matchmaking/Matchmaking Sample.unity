@@ -331,7 +331,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &56776229
 Transform:
   m_ObjectHideFlags: 0
@@ -401,7 +401,7 @@ MonoBehaviour:
   _runInBackground: 1
   _dontDestroyOnLoad: 1
   _objectPool: {fileID: 0}
-  _persistence: 1
+  _persistence: 0
   _logging: {fileID: 0}
   _spawnablePrefabs: {fileID: 11400000, guid: ec64eb18c93ab344892891f33edbf82a, type: 2}
 --- !u!114 &56776233

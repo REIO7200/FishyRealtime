@@ -5,7 +5,9 @@ using FishNet.Transporting;
 using System;
 using Photon.Realtime;
 using ExitGames.Client.Photon;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 namespace FishyRealtime
 {
@@ -63,7 +65,9 @@ namespace FishyRealtime
         USAWest = 13
     }
 
+#if UNITY_EDITOR
     [InitializeOnLoad]
+#endif
     public class FishyRealtime : Transport, IConnectionCallbacks, IMatchmakingCallbacks, IOnEventCallback, IInRoomCallbacks, ILobbyCallbacks
     {
         private LoadBalancingClient client = new LoadBalancingClient();
@@ -116,21 +120,25 @@ namespace FishyRealtime
 
         }
 
-        private void Awake()
+        private void Start()
         {
             //Make sure thre is not any other instances
-            if (Instance != null) Destroy(Instance);
+            if (Instance != null) Destroy(this);
             //Assign the instance
             Instance = this;
             //Connect to master
             ConnectToRegion(region);
 
+            //To handle playmode stop
+#if UNITY_EDITOR 
             EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
+
         }
 
         private void EditorApplication_playModeStateChanged(PlayModeStateChange obj)
         {
             if (obj == PlayModeStateChange.ExitingPlayMode) Disconnect();
+#endif
         }
 
         private void OnApplicationQuit()
@@ -777,7 +785,7 @@ namespace FishyRealtime
         /// </summary>
         public void LeaveRoom()
         {
-            client.OpLeaveRoom(true);
+            client.OpLeaveRoom(false);
         }
 
         /// <summary>

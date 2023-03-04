@@ -193,7 +193,7 @@ MonoBehaviour:
   maxPlayers: 10
   isVisible: 1
   isOpen: 1
-  connectionProtocol: 0
+  connectionProtocol: 4
   region: 3
 --- !u!114 &980526980
 MonoBehaviour:
