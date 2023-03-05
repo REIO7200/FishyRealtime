@@ -18,7 +18,7 @@ It will join a random room on the master server with the specified filter. Set c
 It creates a room with the specified data
 
 ### void CreateRoom(RoomInfo info, RoomFilter customData)
-It creates a room with the specified data. The RoomFilter will be used to list rooms, join random..
+It creates a room with the specified data. The RoomFilter will be used to filter the room on JoinRandomRoom and GetRoomList
 
 ### void JoinRoom(string name)
 It will try to join a room with that name
@@ -26,7 +26,7 @@ It will try to join a room with that name
 ### void JoinRoom(Room room)
 It will try to join a room with that parameters
 
-### public Room GetCurrenRoom()
+### public Room GetCurrentRoom()
 It will return the current room's data. The client **MUST** be on a room
 
 ### public RoomFilter GetRoomFilter()
@@ -67,7 +67,7 @@ It represents a room on the photon server, and has all the data needed to create
 This is the name of the room, if empty a random name will be generated, the name will be something like Room (Random number between 0 and 999)
 
 #### bool isPublic
-Set it to false if you want the room to be listed with GetRoomList() and can be joined with JoinRandomRoom(), the room can stil be joined with JoinRoom()
+Set it to false if you to prevent the room being listed with GetRoomList() and joined with JoinRandomRoom(), the room can stil be joined with JoinRoom()
 
 #### bool open
 Set it to false to prevent clients from joining
