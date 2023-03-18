@@ -22,7 +22,8 @@ Photon Realtime: https://www.photonengine.com/en-US/Realtime
 10. Go back to the Photon Dashboard and on your project copy the App ID to the FishyRealtime's App Id field
 11. In the Version put whatever you like. Keep in mind that clients with different versions cant connect to eachother
 12. You can leave the socket type to UDP, but if you are making a WebGL game, change it to Web Socket
-13. Thats it! 
+13. You must set your NetworkManagers persistence to DestroyNewest. I couldnt find a way to make it to work with the other two
+14. Thats it! 
 
 ## Matchmaking
 
