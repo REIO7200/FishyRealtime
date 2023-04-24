@@ -289,12 +289,12 @@ namespace FishyRealtime
 
         public override void IterateIncoming(bool server)
         {
-            client.LoadBalancingPeer.DispatchIncomingCommands();
+            client.Service();
         }
 
         public override void IterateOutgoing(bool server)
         {
-            client.LoadBalancingPeer.SendOutgoingCommands();
+            //client.Service() does both (Is this the right way to do it?)
         }
 
         //Called when a photon event is received
