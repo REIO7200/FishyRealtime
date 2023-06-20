@@ -31,7 +31,7 @@ namespace FishyRealtime
         /// <summary>
         /// Max number of players
         /// </summary>
-        public byte maxPlayers;
+        public int maxPlayers;
         /// <summary>
         /// How much players are on this room, changing this wont do nothing to the room itself
         /// </summary>
