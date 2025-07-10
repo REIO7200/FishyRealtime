@@ -1,8 +1,6 @@
 # FishyRealtime
 A photon realtime transport for Fish-Networking
 
-If you have any issues, ping me (REIO 7200#2377) on the [FirstGearGames discord](https://discord.gg/Ta9HgDh4Hj)
-
 ## Dependencies
 
 Fish-Networking: https://github.com/FirstGearGames/FishNet
